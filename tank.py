@@ -1,5 +1,6 @@
 # Создание, отрисовка и управление танком, стрельба
 import pygame
+from random import randint
 pygame.init()
 
 WIDTH, HEIGHT = 800, 600
@@ -34,6 +35,7 @@ class Tank:
         self.keySHOT = keyList[4]
 
     def update(self):
+        oldX, oldY = self.rect.topleft
         if keys[self.keyLEFT]:
             self.rect.x -= self.moveSpeed
             self.direct = 3
@@ -46,6 +48,10 @@ class Tank:
         elif keys[self.keyDOWN]:
             self.rect.y += self.moveSpeed
             self.direct = 2
+
+        for obj in objects:
+            if obj != self and self.rect.colliderect(obj.rect):
+                self.rect.topleft = oldX, oldY
 
         if keys[self.keySHOT] and self.shotTimer == 0:
             dx = DIRECTS[self.direct][0] * self.bulletSpeed
@@ -113,12 +119,49 @@ class Bullet:
     def draw(self):
         pygame.draw.circle(window, 'yellow', (self.px, self.py), 2)
 
+class Block:
+    def __init__(self, px, py, size):
+        objects.append(self)
+        self.type = 'block'
+
+        self.rect = pygame.Rect(px, py, size, size)
+        self.hp = 1
+
+    def update(self):
+        pass
+
+    def draw(self):
+        pygame.draw.rect(window, 'green', self.rect)
+        pygame.draw.rect(window, 'gray20', self.rect, 2)
+
+    def damage(self, value):
+        self.hp -= value
+        if self.hp <= 0:
+            objects.remove(self)
+
 bullets = []
 objects = []
 
 Heavy('blue', 100, 275, 0, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_RETURN))
-Middle('red', 100, 275, 0, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_RETURN))
-Light('yellow', 100, 275, 0, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_RETURN))
+Middle('red', 100, 375, 0, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_RETURN))
+Light('yellow', 100, 475, 0, (pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_RETURN))
+
+
+for _ in range(10):
+    while True:
+        x = randint(0, WIDTH // TILE - 1) * TILE
+        y = randint(0, HEIGHT // TILE - 1) * TILE
+        rect = pygame.Rect(x, y, TILE, TILE)
+        fined = False
+        
+        for obj in objects:
+            if rect.colliderect(obj.rect):
+                fined = True
+        
+        if not fined: 
+            Block(x, y, TILE)
+            break
+
 
 play = True
 while play:
